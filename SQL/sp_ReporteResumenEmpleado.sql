@@ -1,4 +1,5 @@
-CREATE PROCEDURE sp_ReporteResumenEmpleado
+
+CREATE OR ALTER PROCEDURE [dbo].[sp_ReporteResumenEmpleado]
     @EmpleadoID INT = NULL
 AS
 BEGIN
@@ -8,7 +9,7 @@ BEGIN
 
     SELECT 
         e.Area,
-        e.EmpleadoID,
+        e.Nombre AS EmpleadoID,
         e.PuestoFuncional,
         e.FechaIngreso,
         @FechaCorte AS FechaCorte,
@@ -128,5 +129,5 @@ BEGIN
     FROM Empleados e
     LEFT JOIN HorasExtras he ON e.EmpleadoID = he.EmpleadoID
     WHERE (@EmpleadoID IS NULL OR e.EmpleadoID = @EmpleadoID)
-    GROUP BY e.EmpleadoID, e.Area, e.PuestoFuncional, e.FechaIngreso, e.SalarioMensual;
+    GROUP BY e.Nombre, e.Area, e.PuestoFuncional, e.FechaIngreso, e.SalarioMensual;
 END;
