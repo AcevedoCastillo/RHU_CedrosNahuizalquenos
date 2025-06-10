@@ -18,7 +18,7 @@ namespace CedrosNahuizalquenos.Infrastructure.Services
         public async Task<List<EmpleadoDto>> GetAllAsync()
         {
             return await _context.Empleados
-                .Where(e => e.Activo)
+                
                 .Select(e => new EmpleadoDto
                 {
                     EmpleadoID = e.EmpleadoId,
@@ -35,7 +35,7 @@ namespace CedrosNahuizalquenos.Infrastructure.Services
         public async Task<EmpleadoDto?> GetByIdAsync(int id)
         {
             var e = await _context.Empleados.FindAsync(id);
-            if (e == null || !e.Activo) return null;
+            if (e == null) return null;
 
             return new EmpleadoDto
             {
@@ -72,7 +72,7 @@ namespace CedrosNahuizalquenos.Infrastructure.Services
         public async Task<bool> UpdateAsync(int id, EmpleadoDto dto)
         {
             var empleado = await _context.Empleados.FindAsync(id);
-            if (empleado == null || !empleado.Activo) return false;
+            if (empleado == null) return false;
 
             empleado.Nombre = dto.Nombre;
             empleado.Edad = dto.Edad;
@@ -80,7 +80,7 @@ namespace CedrosNahuizalquenos.Infrastructure.Services
             empleado.Area = dto.Area;
             empleado.PuestoFuncional = dto.PuestoFuncional;
             empleado.SalarioMensual = dto.SalarioMensual;
-
+            empleado.Activo = dto.Activo;
             await _context.SaveChangesAsync();
             return true;
         }
@@ -88,9 +88,9 @@ namespace CedrosNahuizalquenos.Infrastructure.Services
         public async Task<bool> DeleteAsync(int id)
         {
             var empleado = await _context.Empleados.FindAsync(id);
-            if (empleado == null || !empleado.Activo) return false;
+            if (empleado == null) return false;
 
-            empleado.Activo = false;
+            _context.Empleados.Remove(empleado);
             await _context.SaveChangesAsync();
             return true;
         }

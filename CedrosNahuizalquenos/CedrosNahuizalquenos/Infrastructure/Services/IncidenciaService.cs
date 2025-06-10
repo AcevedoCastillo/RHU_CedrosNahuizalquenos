@@ -29,7 +29,19 @@ namespace CedrosNahuizalquenos.Infrastructure.Services
                     Comentario = i.Comentario
                 }).ToListAsync();
         }
-
+        public async Task<List<IncidenciaDto>> GetAll()
+        {
+            return await _context.Incidencias
+                .Select(i => new IncidenciaDto
+                {
+                    IncidenciaID = i.IncidenciaId,
+                    EmpleadoID = i.EmpleadoId,
+                    Tipo = i.Tipo,
+                    FechaInicio = i.FechaInicio,
+                    FechaFin = i.FechaFin,
+                    Comentario = i.Comentario
+                }).ToListAsync();
+        }
         public async Task<int> RegistrarIncidenciaAsync(IncidenciaDto dto)
         {
             var incidencia = new Incidencia

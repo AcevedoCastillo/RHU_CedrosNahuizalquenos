@@ -21,6 +21,12 @@ namespace CedrosNahuizalquenos.WebAPI.Controllers
             var horas = await _service.GetByEmpleadoAsync(empleadoId);
             return Ok(horas);
         }
+        [HttpGet]
+        public async Task<ActionResult<List<HorasExtraDto>>> GetAll()
+        {
+            var horas = await _service.GetAll();
+            return Ok(horas);
+        }
 
         [HttpPost]
         public async Task<ActionResult<int>> Registrar([FromBody] HorasExtraDto dto)

@@ -1,0 +1,120 @@
+﻿@page "/client/empleados/crear"
+@using CedrosNahuizalquenos.DTOs
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<div style="display: flex; justify-content: center; align-items: center;">
+    <MudPaper Class="pa-16 ma-2" MaxWidth="600px" Elevation="3">
+        <MudText Typo="Typo.h4" Class="mb-6 text-center" Color="Color.Primary">Formulario de Empleado</MudText>
+
+        <MudForm @ref="form" OnValidSubmit="CrearEmpleadoAsync" OnInvalidSubmit="OnInvalidSubmit">
+            
+            <MudTextField @bind-Value="empleado.Nombre" Label="Nombre completo" Required="true"
+                          For="@(() => empleado.Nombre)" Immediate="true"
+                          HelperText="Ej: Juan Pérez"
+                          Validation="@(new Func<string, string>(ValidarNombre))"
+                          Class="mb-4" />
+
+            <MudNumericField @bind-Value="empleado.Edad" Label="Edad" Required="true" Min="18" Max="100"
+                             For="@(() => empleado.Edad)" HelperText="Edad del empleado (mayor de edad)"
+                             Class="mb-4" />
+
+            <MudDatePicker @bind-Date="empleado.FechaIngreso" Label="Fecha de Ingreso" Required="true"
+                           For="@(() => empleado.FechaIngreso)"
+                           Class="mb-4" />
+
+            <MudSelect T="string" Label="Departamento" @bind-Value="empleado.Area" Class="mb-4">
+                <MudSelectItem Value="@("Administración")">Administración</MudSelectItem>
+                <MudSelectItem Value="@("Producción")">Producción</MudSelectItem>
+                <MudSelectItem Value="@("Recursos Humanos")">Recursos Humanos</MudSelectItem>
+                <MudSelectItem Value="@("Ventas")">Ventas</MudSelectItem>
+            </MudSelect>
+
+            <MudTextField @bind-Value="empleado.PuestoFuncional" Label="Puesto funcional" Required="true"
+                          For="@(() => empleado.PuestoFuncional)" Immediate="true"
+                          HelperText="Ej: Carpintero, Vendedor, Gerente"
+                          Class="mb-4" />
+
+            <MudNumericField @bind-Value="empleado.SalarioMensual" Label="Salario Mensual ($)" Required="true"
+                             For="@(() => empleado.SalarioMensual)" Decimal="true"
+                             Adornment="Adornment.Start" AdornmentText="$"
+                             HelperText="Salario en dólares"
+                             Class="mb-4" />
+
+            <MudCheckBox @bind-Value="empleado.Activo" Label="¿Activo?" Color="Color.Primary" Class="mb-4" />
+
+            <MudButton Disabled="@_processing" OnClick="CrearEmpleadoAsync" Variant="Variant.Filled" Color="Color.Primary" Class="mt-6 w-100">
+                @if (_processing)
+                {
+                    <MudProgressCircular Class="me-2" Size="Size.Small" Indeterminate="true" Color="Color.Primary" />
+                    <MudText Class="ms-2">Procesando...</MudText>
+                }
+                else
+                {
+                    <MudText>Guardar Empleado</MudText>
+                }
+            </MudButton>
+        </MudForm>
+    </MudPaper>
+</div>
+
+@code {
+    private MudForm form;
+    private EmpleadoDto empleado = new() { FechaIngreso = DateTime.Now };
+    private bool _processing = false;
+
+    private async Task CrearEmpleadoAsync()
+    {
+        _processing = true;
+        StateHasChanged();
+
+        await form.Validate();
+
+        if (!form.IsValid)
+        {
+            _processing = false;
+            StateHasChanged();
+            return;
+        }
+
+        try
+        {
+            await Task.Delay(1000);
+
+            var response = await Http.PostAsJsonAsync("api/empleados", empleado);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Empleado creado exitosamente", Severity.Success);
+                empleado = new EmpleadoDto { FechaIngreso = DateTime.Now };
+                await form.ResetAsync();
+            }
+            else
+            {
+                Snackbar.Add("Error al crear el empleado", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+
+        _processing = false;
+        StateHasChanged();
+    }
+
+    private void OnInvalidSubmit()
+    {
+        Snackbar.Add("Por favor, corrige los errores del formulario.", Severity.Warning);
+    }
+
+    private string ValidarNombre(string nombre)
+    {
+        if (string.IsNullOrWhiteSpace(nombre))
+            return "El nombre es obligatorio.";
+        if (nombre.Length < 3)
+            return "Debe tener al menos 3 caracteres.";
+        return null;
+    }
+}

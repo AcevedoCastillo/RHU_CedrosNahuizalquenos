@@ -1,0 +1,117 @@
+﻿@page "/client/incidencia/crear"
+@using CedrosNahuizalquenos.DTOs
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<div style="display: flex; justify-content: center; align-items: center;">
+    <MudPaper Class="pa-16 ma-2" MaxWidth="600px" Elevation="3">
+        <MudText Typo="Typo.h4" Class="mb-6 text-center" Color="Color.Primary">Registrar Incidencia</MudText>
+
+        <MudForm @ref="form" OnValidSubmit="RegistrarIncidenciaAsync" OnInvalidSubmit="OnInvalidSubmit">
+
+            <MudSelect @bind-Value="incidencia.EmpleadoID" Label="Empleado" Required="true" Class="mb-4">
+                <MudSelectItem Value="0">Seleccione</MudSelectItem>
+                @foreach (var emp in empleados)
+                {
+                    <MudSelectItem Value="@emp.EmpleadoID">@emp.Nombre</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudSelect @bind-Value="incidencia.Tipo" Label="Tipo de Incidencia" Required="true" Class="mb-4">
+                <MudSelectItem Value="@("Vacaciones")">Vacaciones</MudSelectItem>
+                <MudSelectItem Value="@("Incapacidad")">Incapacidad</MudSelectItem>
+                <MudSelectItem Value="@("Ausencia")">Ausencia</MudSelectItem>
+            </MudSelect>
+
+            <MudDatePicker @bind-Date="incidencia.FechaInicio" Label="Fecha de Inicio" Required="true" Class="mb-4" />
+            <MudDatePicker @bind-Date="incidencia.FechaFin" Label="Fecha de Fin" Required="true" Class="mb-4" />
+
+            <MudTextField @bind-Value="incidencia.Comentario" Label="Comentario (opcional)" Class="mb-4" />
+
+            <MudButton Disabled="@_processing" OnClick="RegistrarIncidenciaAsync" Variant="Variant.Filled" Color="Color.Primary" Class="mt-6 w-100">
+                @if (_processing)
+                {
+                    <MudProgressCircular Class="me-2" Size="Size.Small" Indeterminate="true" Color="Color.Primary" />
+                    <MudText Class="ms-2">Guardando...</MudText>
+                }
+                else
+                {
+                    <MudText>Registrar Incidencia</MudText>
+                }
+            </MudButton>
+        </MudForm>
+    </MudPaper>
+</div>
+
+@code {
+    private MudForm form;
+    private IncidenciaDto incidencia = new()
+    {
+        FechaInicio = DateTime.Today,
+        FechaFin = DateTime.Today
+    };
+    private List<EmpleadoDto> empleados = new();
+    private bool _processing = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            empleados = await Http.GetFromJsonAsync<List<EmpleadoDto>>("api/empleados");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error al cargar empleados: " + ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task RegistrarIncidenciaAsync()
+    {
+        _processing = true;
+        StateHasChanged();
+
+        await form.Validate();
+
+        if (!form.IsValid)
+        {
+            _processing = false;
+            StateHasChanged();
+            return;
+        }
+        if (incidencia.EmpleadoID == 0)
+        {
+            _processing = false;
+            StateHasChanged();
+            Snackbar.Add("Seleccione un empleado", Severity.Error);
+            return;
+        }
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/incidencias", incidencia);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Incidencia registrada exitosamente", Severity.Success);
+                incidencia = new IncidenciaDto { FechaInicio = DateTime.Today, FechaFin = DateTime.Today };
+                await form.ResetAsync();
+            }
+            else
+            {
+                Snackbar.Add("Error al registrar la incidencia", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Error: " + ex.Message, Severity.Error);
+        }
+
+        _processing = false;
+        StateHasChanged();
+    }
+
+    private void OnInvalidSubmit()
+    {
+        Snackbar.Add("Por favor, corrige los errores del formulario.", Severity.Warning);
+    }
+}

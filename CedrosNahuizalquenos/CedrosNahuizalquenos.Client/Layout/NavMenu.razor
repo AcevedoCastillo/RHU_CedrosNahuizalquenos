@@ -1,10 +1,21 @@
 ﻿
 <MudNavMenu>
-    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-    <MudNavLink Href="counter" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">Counter</MudNavLink>
-    
-    <MudNavLink Href="weather" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Weather</MudNavLink>
-
+    <MudNavLink Href="/recursos-humanos/dashboard" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Inicio</MudNavLink>
+    <MudNavGroup Title="Empleado" Icon="@Icons.Material.Filled.Person">
+        <MudNavLink Href="/client/empleado" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ListAlt">Lista Empleado</MudNavLink>
+        <MudNavLink Href="/client/empleados/crear" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AddCircle">Agregar Empleado</MudNavLink>
+    </MudNavGroup>
+    <MudNavGroup Title="Incidencias" Icon="@Icons.Material.Filled.EventBusy">
+        <MudNavLink Href="/client/incidencia" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ListAlt">Lista de Incidencias</MudNavLink>
+        <MudNavLink Href="/client/incidencia/crear" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AddCircle">Agregar Incidencia</MudNavLink>
+    </MudNavGroup>
+    <MudNavGroup Title="Turnos Extras" Icon="@Icons.Material.Filled.Watch">
+        <MudNavLink Href="/client/horas" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ListAlt">Lista de Turnos Extras</MudNavLink>
+        <MudNavLink Href="/client/hora/crear" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AddCircle">Agregar Registro de Turnos Extras</MudNavLink>
+    </MudNavGroup>
+    <MudNavGroup Title="Planillas" Icon="@Icons.Material.Filled.LibraryBooks">
+        <MudNavLink Href="/client/planilla" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ListAlt">Generar Planilla</MudNavLink>       
+    </MudNavGroup>
 </MudNavMenu>
 
 

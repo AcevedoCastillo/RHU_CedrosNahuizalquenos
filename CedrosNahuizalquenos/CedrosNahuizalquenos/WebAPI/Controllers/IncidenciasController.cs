@@ -21,7 +21,12 @@ namespace CedrosNahuizalquenos.WebAPI.Controllers
             var incidencias = await _service.GetByEmpleadoAsync(empleadoId);
             return Ok(incidencias);
         }
-
+        [HttpGet]
+        public async Task<ActionResult<List<IncidenciaDto>>> GetAll()
+        {
+            var incidencias = await _service.GetAll();
+            return Ok(incidencias);
+        }
         [HttpPost]
         public async Task<ActionResult<int>> Registrar([FromBody] IncidenciaDto dto)
         {

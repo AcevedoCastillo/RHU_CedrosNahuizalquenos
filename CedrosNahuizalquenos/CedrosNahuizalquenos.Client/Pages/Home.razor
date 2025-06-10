@@ -1,59 +1,94 @@
-﻿@page "/"
+﻿@page "/recursos-humanos/dashboard"
+@using CedrosNahuizalquenos.DTOs
+@inject HttpClient Http
 
-<PageTitle>Home</PageTitle>
+<MudContainer MaxWidth="MaxWidth.False">
+    <MudText Typo="Typo.h4" Class="mb-6">📊 Dashboard General</MudText>
 
-<MudText Typo="Typo.h3" GutterBottom="true">Hello, world!</MudText>
-<MudText Class="mb-8">Welcome to your new app, powered by MudBlazor and the .NET 9 Template!</MudText>
+    <MudGrid GutterSize="3">
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="6" Class="pa-4 d-flex flex-column align-center text-center">
+                <MudIcon Icon="@Icons.Material.Filled.Group" Color="Color.Primary" Size="Size.Large" />
+                <MudText Typo="Typo.subtitle1" Class="mt-2">Total de Empleados</MudText>
+                <MudText Typo="Typo.h5">@totalEmpleados</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="6" Class="pa-4 d-flex flex-column align-center text-center">
+                <MudIcon Icon="@Icons.Material.Filled.BeachAccess" Color="Color.Info" Size="Size.Large" />
+                <MudText Typo="Typo.subtitle1" Class="mt-2">Vacaciones</MudText>
+                <MudText Typo="Typo.h5">@empleadosDeVacaciones</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="6" Class="pa-4 d-flex flex-column align-center text-center">
+                <MudIcon Icon="@Icons.Material.Filled.EventBusy" Color="Color.Warning" Size="Size.Large" />
+                <MudText Typo="Typo.subtitle1" Class="mt-2">Ausentes</MudText>
+                <MudText Typo="Typo.h5">@empleadosAusentes</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="6" Class="pa-4 d-flex flex-column align-center text-center">
+                <MudIcon Icon="@Icons.Material.Filled.EventBusy" Color="Color.Warning" Size="Size.Large" />
+                <MudText Typo="Typo.subtitle1" Class="mt-2">Incapacitados</MudText>
+                <MudText Typo="Typo.h5">@empleadosIncapacitados</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
 
-<MudAlert Severity="Severity.Normal" ContentAlignment="HorizontalAlignment.Start">
-    You can find documentation and examples on our website here:
-    <MudLink Href="https://mudblazor.com" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-        <b>www.mudblazor.com</b>
-    </MudLink>
-</MudAlert>
+    <MudDivider Class="my-6" />
 
-<br />
-<MudText Typo="Typo.h5" GutterBottom="true">Interactivity in this Template</MudText>
-<br />
-<MudText Typo="Typo.body2">
-    When you opt for the "Global" Interactivity Location, <br />
-    the render modes are defined in App.razor and consequently apply to all child components.<br />
-    In this case, providers are globally set in the MainLayout.<br />
-    <br />
-    On the other hand, if you choose the "Per page/component" Interactivity Location,<br />
-    it is necessary to include the <br />
-    <br />
-    &lt;MudPopoverProvider /&gt; <br />
-    &lt;MudDialogProvider /&gt; <br />
-    &lt;MudSnackbarProvider /&gt; <br />
-    <br />
-    components on every interactive page.<br />
-    <br />
-    If a render mode is not specified for a page, it defaults to Server-Side Rendering (SSR),<br />
-    similar to this page. While MudBlazor allows pages to be rendered in SSR,<br />
-    please note that interactive features, such as buttons and dropdown menus, will not be functional.
-</MudText>
+    <MudText Typo="Typo.h6" Class="mb-2">📈 Comparativa de Incidencias</MudText>
 
-<br />
-<MudText Typo="Typo.h5" GutterBottom="true">What's New in Blazor with the Release of .NET 9</MudText>
-<br />
+    <MudPaper Class="d-flex justify-center align-center pa-6">
+        <MudChart ChartType="ChartType.Pie"
+                  InputData="@data"
+                  @bind-SelectedIndex="_index"
+                  InputLabels="@labels"
+                  Width="300px"
+                  Height="300px" />
+    </MudPaper>
+</MudContainer>
 
-<MudText Typo="Typo.h6" GutterBottom="true">Prerendering</MudText>
-<MudText Typo="Typo.body2" GutterBottom="true">
-    If you're exploring the features of .NET 9 Blazor,<br /> you might be pleasantly surprised to learn that each page is prerendered on the server,<br /> regardless of the selected render mode.<br /><br />
-    This means that you'll need to inject all necessary services on the server,<br /> even when opting for the wasm (WebAssembly) render mode.<br /><br />
-    This prerendering functionality is crucial to ensuring that WebAssembly mode feels fast and responsive,<br /> especially when it comes to initial page load times.<br /><br />
-    For more information on how to detect prerendering and leverage the RenderContext, you can refer to the following link:
-    <MudLink Href="https://github.com/dotnet/aspnetcore/issues/51468#issuecomment-1783568121" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-        More details
-    </MudLink>
-</MudText>
+@code {
 
-<br />
-<MudText Typo="Typo.h6" GutterBottom="true">InteractiveAuto</MudText>
-<MudText Typo="Typo.body2">
-    A discussion on how to achieve this can be found here:
-    <MudLink Href="https://github.com/dotnet/aspnetcore/issues/51468#issue-1950424116" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-        More details
-    </MudLink>
-</MudText>
+
+
+    int dataSize = 4;
+
+    string[] labels = { "Vacaciones", "Ausencias", "Incapacidad" };
+    private int _index = -1;
+    private int totalEmpleados = 0;
+    private int empleadosDeVacaciones = 0;
+    private int empleadosAusentes = 0;
+    private int empleadosIncapacitados = 0;
+
+    double[] data;
+    protected override async Task OnInitializedAsync()
+    {
+        var empleados = await Http.GetFromJsonAsync<List<EmpleadoDto>>("api/empleados");
+        if (empleados == null) return;
+        foreach (var empleado in empleados)
+        {
+            var incidencias = await Http.GetFromJsonAsync<List<IncidenciaDto>>($"api/incidencias/empleado/{empleado.EmpleadoID}");
+            if (incidencias != null)
+            {
+                if (incidencias.Any(i => i.Tipo == "Vacaciones"))
+                    empleadosDeVacaciones++;
+
+                if (incidencias.Any(i => i.Tipo == "Ausencia"))
+                    empleadosAusentes++;
+                if (incidencias.Any(i => i.Tipo == "Incapacidad"))
+                    empleadosIncapacitados++;
+            }
+            if (empleado.Activo)
+            {
+                totalEmpleados++;
+            }
+        }
+
+        data = new double[] {
+           empleadosDeVacaciones, empleadosAusentes, empleadosIncapacitados
+        };
+    }
+}

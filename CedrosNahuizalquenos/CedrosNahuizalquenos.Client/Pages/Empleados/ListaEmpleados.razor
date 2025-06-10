@@ -1,0 +1,184 @@
+﻿@page "/client/empleado"
+@using CedrosNahuizalquenos.DTOs
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@using System.Globalization
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+
+<MudPaper Class="pa-16 ma-2" Elevation="3">
+
+    <MudTable Items="_empleados" Dense="@dense" Hover="@hover" Bordered="@bordered" Striped="@striped"
+              Filter="new Func<EmpleadoDto, bool>(FilterFunc1)" @bind-SelectedItem="_empleadoEnEdicion">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Lista de Empleados</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchString1" Placeholder="Buscar" Adornment="Adornment.Start"
+             AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0" />
+        </ToolBarContent>
+
+        <HeaderContent>
+            <MudTh>Nombre</MudTh>
+            <MudTh>Edad</MudTh>
+            <MudTh>Fecha Ingreso</MudTh>
+            <MudTh>Área</MudTh>
+            <MudTh>Puesto</MudTh>
+            <MudTh>Salario</MudTh>
+            <MudTh>Activo</MudTh>
+            <MudTh>Acciones</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            @if (_empleadoEnEdicion?.EmpleadoID == context.EmpleadoID)
+            {
+                <MudTd><MudTextField @bind-Value="_empleadoEnEdicion.Nombre" Dense="true" /></MudTd>
+                <MudTd><MudNumericField T="int" @bind-Value="_empleadoEnEdicion.Edad" Dense="true" /></MudTd>
+                <MudTd><MudDatePicker @bind-Date="_empleadoEnEdicion.FechaIngreso" Dense="true" /></MudTd>
+                <MudTd><MudTextField @bind-Value="_empleadoEnEdicion.Area" Dense="true" /></MudTd>
+                <MudTd><MudTextField @bind-Value="_empleadoEnEdicion.PuestoFuncional" Dense="true" /></MudTd>
+                <MudTd><MudNumericField T="decimal" @bind-Value="_empleadoEnEdicion.SalarioMensual" Dense="true" Adornment="Adornment.End" AdornmentText="$" /></MudTd>
+                <MudTd><MudSwitch @bind-value="_empleadoEnEdicion.Activo" Color="Color.Primary" /></MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Check" Color="Color.Success" OnClick="@(() => GuardarEdicionAsync(context.EmpleadoID))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Error" OnClick="@CancelarEdicion" />
+                </MudTd>
+            }
+            else
+            {
+                <MudTd>@context.Nombre</MudTd>
+                <MudTd>@context.Edad</MudTd>
+                <MudTd>@(context.FechaIngreso?.ToString("dd/MM/yyyy"))</MudTd>
+                <MudTd>@context.Area</MudTd>
+                <MudTd>@context.PuestoFuncional</MudTd>
+                <MudTd>@string.Format(CultureInfo.CreateSpecificCulture("en-US"), "{0:C}", context.SalarioMensual)</MudTd>
+                <MudTd>
+                    <MudSwitch @bind-Value="context.Activo"/>
+                </MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@(() => IniciarEdicion(context))" Color="Color.Primary" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => EliminarEmpleadoAsync(context.EmpleadoID, context.Nombre))" />
+                </MudTd>
+            }
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    #region Variables
+    private bool dense = true;
+    private bool hover = true;
+    private bool striped = true;
+    private bool bordered = true;
+
+    private List<EmpleadoDto> _empleados = new();
+    private EmpleadoDto _empleadoEnEdicion;
+    private string searchString1 = "";
+    #endregion
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarEmpleadosAsync();
+    }
+
+    private async Task CargarEmpleadosAsync()
+    {
+        try
+        {
+            _empleados = await Http.GetFromJsonAsync<List<EmpleadoDto>>("api/empleados");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al cargar empleados: {ex.Message}", Severity.Error);
+        }
+    }
+    private bool FilterFunc1(EmpleadoDto element) => FilterFunc(element, searchString1);
+
+    private bool FilterFunc(EmpleadoDto element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (element.Nombre.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if ($"{element.Nombre}".Contains(searchString))
+            return true;
+        return false;
+    }
+    private void IniciarEdicion(EmpleadoDto empleado)
+    {
+        _empleadoEnEdicion = new EmpleadoDto
+        {
+            EmpleadoID = empleado.EmpleadoID,
+            Nombre = empleado.Nombre,
+            Edad = empleado.Edad,
+            FechaIngreso = empleado.FechaIngreso,
+            Area = empleado.Area,
+            PuestoFuncional = empleado.PuestoFuncional,
+            SalarioMensual = empleado.SalarioMensual,
+            Activo = empleado.Activo
+        };
+    }
+
+    private void CancelarEdicion()
+    {
+        _empleadoEnEdicion = null;
+    }
+
+    private async Task GuardarEdicionAsync(int id)
+    {
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"api/empleados/{id}", _empleadoEnEdicion);
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Empleado actualizado correctamente", Severity.Success);
+                await CargarEmpleadosAsync();
+                _empleadoEnEdicion = null;
+            }
+            else
+            {
+                Snackbar.Add("Error al actualizar empleado", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task EliminarEmpleadoAsync(int id, string nombre)
+    {
+        var parameters = new DialogParameters<Dialog>
+        {
+            { x => x.ContentText, $"¿Estás seguro de eliminar al empleado: {nombre}?" },
+            { x => x.ButtonText, "Eliminar" },
+            { x => x.Color, Color.Error }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+
+        var dialog = await DialogService.ShowAsync<Dialog>("Eliminar Empleado", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                var response = await Http.DeleteAsync($"api/empleados/{id}");
+                if (response.IsSuccessStatusCode)
+                {
+                    Snackbar.Add("Empleado eliminado correctamente", Severity.Success);
+                    await CargarEmpleadosAsync();
+                }
+                else
+                {
+                    Snackbar.Add("Error al eliminar empleado", Severity.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+}

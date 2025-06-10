@@ -1,0 +1,83 @@
+﻿@page "/client/incidencia"
+@using CedrosNahuizalquenos.DTOs
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-16 ma-2" Elevation="3">
+
+    <MudTable Items="_incidencias" Dense="@dense" Hover="@hover" Bordered="@bordered" Striped="@striped"
+              Filter="new Func<IncidenciaDto, bool>(FilterFunc)">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Lista de Incidencias</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchString" Placeholder="Buscar por tipo, comentario o empleado"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Medium" Class="mt-0" />
+        </ToolBarContent>
+
+        <HeaderContent>
+            <MudTh>ID</MudTh>
+            <MudTh>Empleado</MudTh>
+            <MudTh>Tipo</MudTh>
+            <MudTh>Fecha Inicio</MudTh>
+            <MudTh>Fecha Fin</MudTh>
+            <MudTh>Comentario</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd>@context.IncidenciaID</MudTd>
+            <MudTd>@GetEmpleadoNombre(context.EmpleadoID)</MudTd>
+            <MudTd>@context.Tipo</MudTd>
+            <MudTd>@context.FechaInicio?.ToString("dd/MM/yyyy")</MudTd>
+            <MudTd>@context.FechaFin?.ToString("dd/MM/yyyy")</MudTd>
+            <MudTd>@context.Comentario</MudTd>
+        </RowTemplate>
+    </MudTable>
+
+</MudPaper>
+
+@code {
+    private List<IncidenciaDto> _incidencias = new();
+    private Dictionary<int, string> _empleadosDict = new();
+    private string searchString = "";
+    private bool dense = true;
+    private bool hover = true;
+    private bool striped = true;
+    private bool bordered = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatosAsync();
+    }
+
+    private async Task CargarDatosAsync()
+    {
+        try
+        {
+            var empleados = await Http.GetFromJsonAsync<List<EmpleadoDto>>("api/empleados");
+            _empleadosDict = empleados.ToDictionary(e => e.EmpleadoID, e => e.Nombre);
+
+            _incidencias = await Http.GetFromJsonAsync<List<IncidenciaDto>>("api/incidencias");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al cargar datos: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private string GetEmpleadoNombre(int empleadoId)
+    {
+        return _empleadosDict.TryGetValue(empleadoId, out var nombre) ? nombre : "Desconocido";
+    }
+
+    private bool FilterFunc(IncidenciaDto incidencia)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+
+        var nombreEmpleado = GetEmpleadoNombre(incidencia.EmpleadoID);
+        return (incidencia.Tipo?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (incidencia.Comentario?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (nombreEmpleado.Contains(searchString, StringComparison.OrdinalIgnoreCase));
+    }
+}

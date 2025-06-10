@@ -1,0 +1,143 @@
+﻿@page "/client/planilla"
+@inject HttpClient Http
+@using CedrosNahuizalquenos.DTOs
+@using MudBlazor
+@using System.Globalization
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Resumen de Empleados</PageTitle>
+
+<MudPaper Class="p-4">
+    <MudText Typo="Typo.h5" Class="mb-2">Planilla de Empleados</MudText>
+    <MudButton OnClick="ExportarExcelAsync" Variant="Variant.Filled"  Color="Color.Tertiary" Class="my-3">
+            @if (_processing)
+            {
+                <MudProgressCircular Class="me-2" Size="Size.Small" Indeterminate="true" Color="Color.Primary" />
+                
+                <MudText Class ="ms-2"> Procesando... </MudText>
+            }
+            else
+            {
+                
+                <MudText>Descargar Archivo Excel</MudText>
+            }
+    </MudButton>
+    <MudTable Items="_resumen" Dense="true" Hover="true" Class="mt-4">
+        <HeaderContent>
+            <MudTh>Área</MudTh>
+            <MudTh>ID Empleado</MudTh>
+            <MudTh>Puesto Funcional</MudTh>
+            <MudTh>Fecha Ingreso</MudTh>
+            <MudTh>Fecha Corte</MudTh>
+            <MudTh>Años en Empresa</MudTh>
+            <MudTh>Salario Mensual</MudTh>
+
+            <MudTh>HE Diurnas</MudTh>
+            <MudTh>HE Nocturnas</MudTh>
+            <MudTh>Horas Nocturnas</MudTh>
+
+            <MudTh>Pago HE Diurnas</MudTh>
+            <MudTh>Pago HE Nocturnas</MudTh>
+            <MudTh>Pago Nocturnidad</MudTh>
+
+            <MudTh>Vacaciones</MudTh>
+            <MudTh>Aguinaldo Total</MudTh>
+            <MudTh>Aguinaldo No Gravado</MudTh>
+            <MudTh>Aguinaldo Gravado</MudTh>
+
+            <MudTh>Monto Gravado Cotizable</MudTh>
+
+            <MudTh>ISSS Patronal</MudTh>
+            <MudTh>ISSS Empleado</MudTh>
+            <MudTh>AFP Patronal</MudTh>
+            <MudTh>AFP Empleado</MudTh>
+
+            <MudTh>Monto Empleado</MudTh>
+            <MudTh>Monto Planilla</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Área">@context.Area</MudTd>
+            <MudTd>@context.EmpleadoID</MudTd>
+            <MudTd>@context.PuestoFuncional</MudTd>
+            <MudTd>@context.FechaIngreso.ToString("dd/MM/yyyy")</MudTd>
+            <MudTd>@context.FechaCorte.ToString("dd/MM/yyyy")</MudTd>
+            <MudTd>@context.TiempoEnEmpresaAnios</MudTd>
+            <MudTd>@string.Format(CultureInfo.CreateSpecificCulture("en-US"), "{0:C}", context.TotalPorPuestoMensual)</MudTd>
+
+            <MudTd>@context.HorasExtrasDiurnas</MudTd>
+            <MudTd>@context.HorasExtrasNocturnas</MudTd>
+            <MudTd>@context.HorasNocturnas</MudTd>
+
+            <MudTd>@string.Format(CultureInfo.CreateSpecificCulture("en-US"), "{0:C}", context.PagoHorasExtrasDiurnas)</MudTd>
+            <MudTd>@string.Format(CultureInfo.CreateSpecificCulture("en-US"), "{0:C}", context.PagoHorasExtrasNocturnas)</MudTd>
+            <MudTd>@string.Format(CultureInfo.CreateSpecificCulture("en-US"), "{0:C}", context.PagoHorasNocturnidad)</MudTd>
+
+
+            <MudTd>@string.Format(CultureInfo.CreateSpecificCulture("en-US"), "{0:C}", context.Vacaciones)</MudTd>
+            <MudTd>@string.Format(CultureInfo.CreateSpecificCulture("en-US"), "{0:C}", context.AguinaldoTotal)</MudTd>
+            <MudTd>@string.Format(CultureInfo.CreateSpecificCulture("en-US"), "{0:C}", context.AguinaldoNoGravado)</MudTd>
+            <MudTd>@string.Format(CultureInfo.CreateSpecificCulture("en-US"), "{0:C}", context.AguinaldoGravado)</MudTd>
+
+            <MudTd>@string.Format(CultureInfo.CreateSpecificCulture("en-US"), "{0:C}", context.MontoGravadoCotizable)</MudTd>
+
+            <MudTd>@string.Format(CultureInfo.CreateSpecificCulture("en-US"), "{0:C}", context.ISSSPatronal)</MudTd>
+            <MudTd>@string.Format(CultureInfo.CreateSpecificCulture("en-US"), "{0:C}", context.ISSSEmpleado)</MudTd>
+            <MudTd>@string.Format(CultureInfo.CreateSpecificCulture("en-US"), "{0:C}", context.AFPPatronal)</MudTd>
+            <MudTd>@string.Format(CultureInfo.CreateSpecificCulture("en-US"), "{0:C}", context.AFPEmpleado)</MudTd>
+
+            <MudTd>@string.Format(CultureInfo.CreateSpecificCulture("en-US"), "{0:C}", context.MontoEmpleado)</MudTd>
+            <MudTd>@string.Format(CultureInfo.CreateSpecificCulture("en-US"), "{0:C}", context.MontoPlanilla)</MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private bool _processing = false;
+    private List<ReporteResumenEmpleadoDto> _resumen = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _resumen = await Http.GetFromJsonAsync<List<ReporteResumenEmpleadoDto>>("api/reporte/resumen-empleado");
+    }
+
+    private async Task ExportarExcelAsync()
+    {
+        try
+        {
+            _processing = true;
+            StateHasChanged();
+            await Task.Delay(2000);
+            var url = $"api/reporte/resumen/excel";
+            var stream = await Http.GetStreamAsync(url);
+
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            var base64 = Convert.ToBase64String(memoryStream.ToArray());
+            var filename = $"ReportePlanilla_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+            var jsCode = $@"
+                            (function() {{
+                                const base64 = '{base64}';
+                                const fileName = '{filename}';
+                                const link = document.createElement('a');
+                                link.download = fileName;
+                                link.href = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + base64;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            }})();";
+
+            await JS.InvokeVoidAsync("eval", jsCode);
+            _processing = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al exportar: {ex.Message}", Severity.Error);
+        }
+
+    }
+}

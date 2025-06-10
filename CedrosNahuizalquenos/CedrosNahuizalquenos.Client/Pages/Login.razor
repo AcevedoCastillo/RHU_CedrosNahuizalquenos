@@ -1,0 +1,97 @@
+﻿@page "/client/"
+@page "/client/login"
+
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+@using MudBlazor
+
+
+<div class="d-flex justify-center align-center" style="height: 80vh;">
+    <MudPaper Elevation="2" Class="pa-12 d-flex flex-column align-center" Style="max-width: 600px; width: 100%;">
+        <MudIcon Icon="@Icons.Material.Filled.Person"
+                 Style="font-size: 64px;"
+                 Color="Color.Primary"
+                 Class="mb-2" />
+
+
+
+        <MudText Typo="Typo.h5" Class="mb-1">Bienvenido</MudText>
+        <MudText Typo="Typo.subtitle2" Color="Color.Secondary" Class="mb-6">Inicia sesión para continuar</MudText>
+
+        <MudTextField @bind-Value="usuario"
+                      Label="Usuario"
+                      Variant="Variant.Outlined"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Person"
+                      Class="mb-4"
+                      Dense="true"
+                      FullWidth="true" />
+
+        <MudTextField @bind-Value="contrasena"
+                      Label="Contraseña"
+                      Variant="Variant.Outlined"
+                      InputType="InputType.Password"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Lock"
+                      Class="mb-6"
+                      Dense="true"
+                      FullWidth="true" />
+
+        <MudButton Disabled="@_processing" Color="Color.Primary" Variant="Variant.Filled" Class="mt-4 w-100" OnClick="IniciarSesion" FullWidth="true">
+            @if (_processing)
+            {
+                <MudProgressCircular Indeterminate="true" Size="Size.Small" Color="Color.Primary" Class="me-2" />
+                <MudText Class="ms-2"> Validando el usuario... </MudText>
+            }
+            else
+            {
+
+                <MudText>Iniciar Sesión</MudText>
+            }
+        </MudButton>
+    </MudPaper>
+</div>
+
+
+
+
+@code {
+    private string usuario;
+    private string contrasena;
+    private bool _processing = false;
+
+    private async Task IniciarSesion()
+    {
+        _processing = true;
+        StateHasChanged();
+        var loginRequest = new
+        {
+            Usuario = usuario,
+            Contrasena = contrasena
+        };
+
+        try
+        {
+            await Task.Delay(2000);
+
+            if (true)
+            {
+                Snackbar.Add("Inicio de sesión exitoso", Severity.Success);
+                Navigation.NavigateTo("/recursos-humanos/dashboard", forceLoad: true);
+            }
+            else
+            {
+                Snackbar.Add("Credenciales incorrectas", Severity.Error);
+                _processing = false;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al iniciar sesión: {ex.Message}", Severity.Error);
+            _processing = false;
+            StateHasChanged();
+        }
+    }
+}

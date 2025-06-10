@@ -28,6 +28,18 @@ namespace CedrosNahuizalquenos.Infrastructure.Services
                     CantidadHoras = h.CantidadHoras
                 }).ToListAsync();
         }
+        public async Task<List<HorasExtraDto>> GetAll()
+        {
+            return await _context.HorasExtras
+                .Select(h => new HorasExtraDto
+                {
+                    HoraExtraID = h.HoraExtraId,
+                    EmpleadoID = h.EmpleadoId,
+                    Fecha = h.Fecha,
+                    Tipo = h.Tipo,
+                    CantidadHoras = h.CantidadHoras
+                }).ToListAsync();
+        }
 
         public async Task<int> RegistrarHorasAsync(HorasExtraDto dto)
         {

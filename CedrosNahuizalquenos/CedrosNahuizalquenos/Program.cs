@@ -24,7 +24,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
 builder.Services.AddScoped<IHorasExtraService, HorasExtraService>();
 builder.Services.AddScoped<IIncidenciaService, IncidenciaService>();
-
+builder.Services.AddScoped<IReporteResumenService, ReporteResumenEmpleadoService>();
 //Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

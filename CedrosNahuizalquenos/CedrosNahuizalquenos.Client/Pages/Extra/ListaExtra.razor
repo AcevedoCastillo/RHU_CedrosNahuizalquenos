@@ -1,0 +1,80 @@
+﻿@page "/client/horas"
+@using CedrosNahuizalquenos.DTOs
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-16 ma-2" Elevation="3">
+
+    <MudTable Items="_horasExtra" Dense="@dense" Hover="@hover" Bordered="@bordered" Striped="@striped"
+              Filter="new Func<HorasExtraDto, bool>(FilterFunc)">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Lista de Horas Extra</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchString" Placeholder="Buscar por tipo, horas o empleado"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Medium" Class="mt-0" />
+        </ToolBarContent>
+
+        <HeaderContent>
+            <MudTh>ID</MudTh>
+            <MudTh>Empleado</MudTh>
+            <MudTh>Fecha</MudTh>
+            <MudTh>Tipo</MudTh>
+            <MudTh>Horas</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd>@context.HoraExtraID</MudTd>
+            <MudTd>@GetEmpleadoNombre(context.EmpleadoID)</MudTd>
+            <MudTd>@context.Fecha?.ToString("dd/MM/yyyy")</MudTd>
+            <MudTd>@context.Tipo</MudTd>
+            <MudTd>@context.CantidadHoras</MudTd>
+        </RowTemplate>
+    </MudTable>
+
+</MudPaper>
+
+@code {
+    private List<HorasExtraDto> _horasExtra = new();
+    private Dictionary<int, string> _empleadosDict = new();
+    private string searchString = "";
+    private bool dense = true;
+    private bool hover = true;
+    private bool striped = true;
+    private bool bordered = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatosAsync();
+    }
+
+    private async Task CargarDatosAsync()
+    {
+        try
+        {
+            var empleados = await Http.GetFromJsonAsync<List<EmpleadoDto>>("api/empleados");
+            _empleadosDict = empleados.ToDictionary(e => e.EmpleadoID, e => e.Nombre);
+
+            _horasExtra = await Http.GetFromJsonAsync<List<HorasExtraDto>>("api/horasextras");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al cargar datos: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private string GetEmpleadoNombre(int empleadoId)
+    {
+        return _empleadosDict.TryGetValue(empleadoId, out var nombre) ? nombre : "Desconocido";
+    }
+
+    private bool FilterFunc(HorasExtraDto registro)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+
+        var nombreEmpleado = GetEmpleadoNombre(registro.EmpleadoID);
+        return (registro.Tipo?.Contains(searchString, StringComparison.OrdinalIgnoreCase) ?? false)
+            || nombreEmpleado.Contains(searchString, StringComparison.OrdinalIgnoreCase);
+    }
+}

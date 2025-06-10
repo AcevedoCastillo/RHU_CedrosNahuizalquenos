@@ -1,0 +1,122 @@
+﻿@page "/client/hora/crear"
+@using CedrosNahuizalquenos.DTOs
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-16 ma-2" Elevation="3">
+    <MudText Typo="Typo.h6" Class="mb-4">Registrar Turno / Hora Extra</MudText>
+
+    <MudForm @ref="_form" OnValidSubmit="RegistrarHoraExtra">
+        <MudGrid>
+            <MudItem xs="12" sm="6">
+                <MudSelect T="int" Label="Empleado" Required @bind-Value="_nuevoRegistro.EmpleadoID">
+                    <MudSelectItem Value="0">Seleccione</MudSelectItem>
+                    @foreach (var empleado in _empleados)
+                    {
+                        <MudSelectItem Value="@empleado.EmpleadoID">@empleado.Nombre</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudDatePicker Label="Fecha" Required @bind-Date="_nuevoRegistro.Fecha" />
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudSelect T="string" Label="Tipo" Required @bind-Value="_nuevoRegistro.Tipo">
+                    @foreach (var tipo in _tiposTurno)
+                    {
+                        <MudSelectItem Value="@tipo">@tipo</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudNumericField T="decimal" Label="Cantidad de Horas" Required @bind-Value="_nuevoRegistro.CantidadHoras"
+                                 Min="0.5m" Max="24m" Step="0.5m" />
+            </MudItem>
+        </MudGrid>
+
+        <MudButton Disabled="@_processing" OnClick="RegistrarHoraExtra" Variant="Variant.Filled" Color="Color.Primary" Class="mt-6 w-100">
+            @if (_processing)
+            {
+                <MudProgressCircular Class="me-2" Size="Size.Small" Indeterminate="true" Color="Color.Primary" />
+                <MudText Class="ms-2">Guardando...</MudText>
+            }
+            else
+            {
+                <MudText>Registrar</MudText>
+            }
+        </MudButton>
+    </MudForm>
+</MudPaper>
+
+@code {
+    private bool _processing = false;
+    private MudForm _form;
+    private HorasExtraDto _nuevoRegistro = new();
+    private List<EmpleadoDto> _empleados = new();
+    private readonly List<string> _tiposTurno = new() { "Diurna", "Nocturna", "Nocturnidad" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarEmpleadosAsync();
+        _nuevoRegistro.Fecha = DateTime.Today;
+    }
+
+    private async Task CargarEmpleadosAsync()
+    {
+        try
+        {
+            var result = await Http.GetFromJsonAsync<List<EmpleadoDto>>("api/empleados");
+            _empleados = result ?? new();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error al cargar empleados: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task RegistrarHoraExtra()
+    {
+        try
+        {
+            _processing = true;
+            StateHasChanged();
+
+            await _form.Validate();
+
+            if (!_form.IsValid)
+            {
+                _processing = false;
+                StateHasChanged();
+                return;
+            }
+            if (_nuevoRegistro.EmpleadoID == 0)
+            {
+                _processing = false;
+                StateHasChanged();
+                Snackbar.Add("Seleccione un empleado", Severity.Error);
+                return;
+            }
+            var response = await Http.PostAsJsonAsync("api/horasextras", _nuevoRegistro);
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Hora extra registrada con éxito", Severity.Success);
+                _nuevoRegistro = new HorasExtraDto { Fecha = DateTime.Today };
+                await _form.ResetAsync();
+            }
+            else
+            {
+                var errorMsg = await response.Content.ReadAsStringAsync();
+                Snackbar.Add($"Error al registrar: {errorMsg}", Severity.Error);
+            }
+            _processing = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Excepción: {ex.Message}", Severity.Error);
+        }
+    }
+}
